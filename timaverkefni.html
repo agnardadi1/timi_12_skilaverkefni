@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="is">
   <head>
     <meta charset="UTF-8" />
@@ -33,16 +33,21 @@
 
     <section id="ex1">
       <h2>Æfing 1 – Samfallandi spurningar (Accordion)</h2>
-      <button class="q" onclick="toggleAnswer(this)">Hvað er DOM?</button>
+      <button class="q" onclick="toggleAnswer(event)">Hvað er DOM?</button>
       <div class="a" style="display: none">Svar hér…</div>
-      <button class="q" onclick="toggleAnswer(this)">Hvað er event?</button>
+      <button class="q" onclick="toggleAnswer(event)">Hvað er event?</button>
       <div class="a" style="display: none">Svar hér…</div>
       <script>
         // TODO:
         // 1) Finndu alla .q takka, bættu on click event sem sýnir/felur næsta systkini (.a)
         //    með því að toggla t.d. element.style.display = 'none' / 'block'.
-        function toggleAnswer(button) {
+        function toggleAnswer(e) {
           // Bæta kóða hér
+          const button = e.target;
+          const answer = button.nextElementSibling;
+          if (!answer) return;
+          const isHidden = answer.style.display === "none";
+          answer.style.display = isHidden ? "block" : "none";
         }
       </script>
     </section>
@@ -63,6 +68,18 @@
 
         function updateCount() {
           // Bæta kóða hér
+          const msg = document.getElementById("msg");
+          const length = msg.value.length;
+          console.log(length);
+          const countElement = document.getElementById("count");
+          countElement.textContent = length;
+
+          if (length > 99) {
+            msg.style.color = "red";
+            msg.value = msg.value.substring(0, 99);
+          } else {
+            msg.style.color = "black";
+          }
         }
       </script>
     </section>
@@ -89,24 +106,36 @@
           document.getElementById("time").textContent = `${mm}:${ss}.${
             tenths % 10
           }`;
-          function tick() {
-            tenths++;
-            showTime();
-          }
-          /// Bæðtið fyrir neðan
-
-          ////  Bætið fyrir ofan
-
+        }
+        function tick() {
+          tenths++;
           showTime();
         }
+        /// Bæðtið fyrir neðan
+        function start() {
+          if (!timerId) timerId = setInterval(tick, 100);
+          return;
+        }
+
+        function pause() {
+          clearInterval(timerId);
+          timerId = null;
+        }
+
+        function resetTimer() {
+          pause();
+          tenths = 0;
+          showTime();
+        }
+        ////  Bætið fyrir ofan
       </script>
     </section>
     <section id="ex4">
       <h2>Æfing 4 – Flipar (Tabs)</h2>
       <div>
-        <button data-tab="one">Flipi 1</button>
-        <button data-tab="two">Flipi 2</button>
-        <button data-tab="three">Flipi 3</button>
+        <button data-tab="one" onclick="showPanelOne()">Flipi 1</button>
+        <button data-tab="two" onclick="showPanelTwo()">Flipi 2</button>
+        <button data-tab="three" onclick="showPanelThree()">Flipi 3</button>
       </div>
       <div id="panel-one">Efni fyrir flipa 1</div>
       <div id="panel-two" style="display: none">Efni fyrir flipa 2</div>
@@ -115,6 +144,27 @@
         // TODO:
         // 1) Á click á flipa: fela alla panela og sýna aðeins réttan (#panel-one/two/three)
         //    með display-stíl, byggt á data-tab attribute.
+        function showPanelOne() {
+          const panelOne = document.getElementById("panel-one");
+          const isHidden =
+            panelOne.style.display === "none" || panelOne.style.display === "";
+          panelOne.style.display = isHidden ? "block" : "none";
+        }
+
+        function showPanelTwo() {
+          const panelTwo = document.getElementById("panel-two");
+          const isHidden =
+            panelTwo.style.display === "none" || panelTwo.style.display === "";
+          panelTwo.style.display = isHidden ? "block" : "none";
+        }
+
+        function showPanelThree() {
+          const panelThree = document.getElementById("panel-three");
+          const isHidden =
+            panelThree.style.display === "none" ||
+            panelThree.style.display === "";
+          panelThree.style.display = isHidden ? "block" : "none";
+        }
       </script>
     </section>
 
@@ -141,14 +191,69 @@
         // 1) Á mousedown á #box: byrja hlustun á mousemove á document og færa box (left/top) m.v. hvar músin er.
         // 2) Á mouseup: hætta að hlusta.
         // 3) Mundu að halda kassanum innan #area (min/max mörk).
+
+        const box = document.getElementById("box");
+        const area = document.getElementById("area");
+        let dragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        box.addEventListener("mousedown", (e) => {
+          dragging = true;
+          offsetX = e.clientX - box.offsetLeft;
+          offsetY = e.clientY - box.offsetTop;
+        });
+
+        function clamp(val, min, max) {
+          return Math.max(min, Math.min(max, val));
+        }
+
+        function onMove(e) {
+          if (!dragging) return;
+          const maxX = area.clientWidth - box.offsetWidth;
+          const maxY = area.clientHeight - box.offsetHeight;
+          const left = clamp(e.clientX - offsetX, 0, maxX);
+          const top = clamp(e.clientY - offsetY, 0, maxY);
+          box.style.left = left + "px";
+          box.style.top = top + "px";
+        }
+
+        function onUp() {
+          dragging = false;
+          document.removeEventListener("mousemove", onMove);
+        }
       </script>
     </section>
 
     <section id="ex6">
       <h2>Æfing 6 – RGB sleðar</h2>
-      <input id="r" type="range" min="0" max="255" value="128" /> R
-      <input id="g" type="range" min="0" max="255" value="128" /> G
-      <input id="b" type="range" min="0" max="255" value="128" /> B
+      <input
+        oninput="updateRGB()"
+        id="r"
+        type="range"
+        min="0"
+        max="255"
+        value="128"
+      />
+      R
+      <input
+        oninput="updateRGB()"
+        id="g"
+        type="range"
+        min="0"
+        max="255"
+        value="128"
+      />
+      G
+      <input
+        oninput="updateRGB()"
+        id="b"
+        type="range"
+        min="0"
+        max="255"
+        value="128"
+      />
+      B
       <div
         id="preview"
         style="width: 120px; height: 60px; border: 1px solid #ccc"
@@ -158,6 +263,14 @@
         // TODO:
         // 1) Ná í value af öllum sleðum og setja það í rgb(r,g,b) sem backgroundColor á #preview.
         // 2) Sýna jafnvel núverandi gildi á rgb og birta það  í <p>.
+        const red = document.getElementById("r");
+        const green = document.getElementById("g");
+        const blue = document.getElementById("b");
+        const colorBox = document.getElementById("preview");
+        function updateRGB() {
+          const color = `rgb(${r.value}, ${g.value}, ${b.value})`;
+          colorBox.style.backgroundColor = color;
+        }
       </script>
     </section>
   </body>
